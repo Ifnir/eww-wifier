@@ -1,8 +1,8 @@
 use std::process::{Command};
-use std::{str};
-use serde::{Serialize, Deserialize};
+/* use std::{str};
+use serde::{Serialize, Deserialize}; */
 // use serde_json::{Result};
-#[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
+/* #[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
 struct Device {
     name: String,
     address: String,
@@ -31,7 +31,14 @@ impl Device {
         
         Ok(devices)
     }
+} */
+
+#[derive(Debug)]
+struct NetworkRow {
+    name: String,
+    signal: String,
 }
+
 
 fn main() {
     let output = Command::new("iwctl")
@@ -40,12 +47,24 @@ fn main() {
         .expect("Failed to execute command");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let networks: Vec<&str> = stdout.lines().skip(1).map(|line| line.split_whitespace().nth(0).unwrap_or("")).collect();
-
-    println!("Available Wi-Fi networks:");
-    for network in networks {
-        println!("{}", network);
+    
+    
+    let mut network_rows: Vec<NetworkRow> = Vec::new();
+    for line in stdout.lines().skip(3).skip(1) {
+        let mut name = line.split_whitespace().take_while(|field| *field != "psk").collect::<Vec<&str>>().join(" ");
+        name = name.trim().to_string();
+        let asterisk_only = line.split_whitespace().last().unwrap_or("").to_string();
+        let signal =  asterisk_only.chars().filter(|c| *c == '*').collect::<String>();
+        let network_row = NetworkRow {
+            name,
+            signal,
+        };
+        network_rows.push(network_row);
     }
+    network_rows.pop();
+
+    println!("{:?}", network_rows)
+
 }
 
 
