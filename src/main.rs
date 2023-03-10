@@ -52,16 +52,18 @@ fn main() {
     let mut network_rows: Vec<NetworkRow> = Vec::new();
     for line in stdout.lines().skip(3).skip(1) {
         let mut name = line.split_whitespace().take_while(|field| *field != "psk").collect::<Vec<&str>>().join(" ");
-        name = name.trim().to_string();
-        let asterisk_only = line.split_whitespace().last().unwrap_or("").to_string();
-        let signal =  asterisk_only.chars().filter(|c| *c == '*').collect::<String>();
-        let network_row = NetworkRow {
-            name,
-            signal,
-        };
-        network_rows.push(network_row);
+        name = name.trim().replace("\u{1b}[1;90m> \u{1b}[0m", "").to_string();
+        if !name.is_empty() {
+            let asterisk_only = line.split_whitespace().last().unwrap_or("").to_string();
+            let signal =  asterisk_only.chars().filter(|c| *c == '*').collect::<String>();
+            let network_row = NetworkRow {
+                name,
+                signal,
+            };
+            network_rows.push(network_row);
+        }
+      
     }
-    network_rows.pop();
 
     println!("{:?}", network_rows)
 
