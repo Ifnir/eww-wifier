@@ -1,37 +1,27 @@
-use std::process::{Command};
-/* use std::{str};
-use serde::{Serialize, Deserialize}; */
-// use serde_json::{Result};
-/* #[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
-struct Device {
-    name: String,
-    address: String,
-    powered: bool,
-    adapter: String,
-    mode: String,
+use std::{process::{Command}, env};
+use std::error::Error;
+use std::fmt;
+
+#[derive(Debug)]
+struct MyError(String);
+
+impl fmt::Display for MyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
-impl Device {
-    fn from_utf8(s: &[u8]) -> Result<Vec<Device>, String> {
-        let s = match String::from_utf8(s.to_vec()) {
-            Ok(v) => v,
-            Err(e) => return Err(format!("Invalid UTF-8 sequence: {}", e)),
-        };
-        
-        let mut lines = s.lines().skip(3); // skip the header lines
-        println!("{:#?}", lines);
-        let mut devices = Vec::new();
-        while let Some(line) = lines.next() {
-            let device: Device = match serde_json::from_str(line) {
-                Ok(d) => d,
-                Err(e) => return Err(format!("Failed to parse device: {}", e)),
-            };
-            devices.push(device);
-        }
-        
-        Ok(devices)
+impl Error for MyError {}
+
+impl From<Box<dyn Error>> for MyError {
+    fn from(err: Box<dyn Error>) -> Self {
+        MyError(err.to_string())
     }
-} */
+}
+
+
+
+
 
 #[derive(Debug)]
 struct NetworkRow {
@@ -41,8 +31,9 @@ struct NetworkRow {
 
 
 fn main() {
+    let device = env::args().skip(1).next().unwrap_or("wlan0".to_string());
     let output = Command::new("iwctl")
-        .args(&["station", "wlan0", "get-networks"])
+        .args(&["station", &device , "get-networks"])
         .output()
         .expect("Failed to execute command");
 
@@ -65,7 +56,10 @@ fn main() {
       
     }
 
-    println!("{:?}", network_rows)
+    for network_row in &network_rows {
+        println!("Name: {} Signal: {}", network_row.name, network_row.signal);
+    }
+    
 
 }
 
